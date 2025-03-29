@@ -1,0 +1,22 @@
+{
+  "name": "angular-codx-recipe",
+  "version": "1.0.0",
+  "description": "Codx recipe to quickly install and configure Angular project",
+  "keywords": [
+    "codx-recipe",
+    "boilerplate",
+    "angular",
+    "tailwindcss",
+    "eslint",
+    "prettier",
+    "biome",
+    "primeng",
+    "husky"
+  ],
+  "author": {
+    "name": "Marmotz",
+    "email": "contact@marmotz.dev",
+    "url": "https://www.marmotz.dev"
+  },
+  "license": "MIT"
+}

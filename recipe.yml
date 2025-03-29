@@ -1,0 +1,421 @@
+description: "Set up an Angular project with optional dependencies"
+author: "Codx"
+
+steps:
+  - action:
+      type: "message"
+      content: "Welcome to the Angular Installation Assistant!"
+      style: "header"
+
+  - name: "Enter Project Name"
+    action:
+      type: "prompt"
+      promptType: "text"
+      message: "Project name:"
+      defaultValue: "my-angular-app"
+    variable: "projectName"
+
+  - name: "Select additional libraries"
+    action:
+      type: "prompt"
+      promptType: "checkbox"
+      message: "What additional libraries do you want to install in your new project?"
+      choices:
+        tailwindcss: "Tailwind CSS"
+        eslint: "ESLint"
+        prettier: "Prettier"
+        biome: "Biome"
+        primeng: "PrimeNG"
+        husky: "Husky (Git hooks)"
+      defaultValues:
+        - tailwindcss
+        - eslint
+        - prettier
+        - primeng
+    variable: "additionalLibs"
+
+  - name: "Create Angular Project"
+    action:
+      type: "package"
+      operation: "run"
+      package: "@angular/cli"
+      options: "new {projectName.answer} --defaults --skip-git"
+    onSuccess:
+      - action:
+          type: "message"
+          content: "Angular project created successfully!"
+          style: "success"
+    onFailure:
+      - action:
+          type: "message"
+          content: "Failed to create the Angular project."
+          style: "error"
+
+  - name: "Change Directory"
+    action:
+      type: "changeDir"
+      path: "{projectName.answer}"
+
+  - name: "Install Tailwind CSS"
+    condition: '"tailwindcss" in additionalLibs.answers'
+    action:
+      type: "package"
+      operation: "install"
+      packages:
+        - "tailwindcss"
+        - "@tailwindcss/postcss"
+        - "postcss"
+      dev: true
+    onSuccess:
+      - action:
+          type: "message"
+          content: "Tailwind CSS installed successfully!"
+          style: "success"
+
+      - name: "Configure PostCSS Plugins"
+        action:
+          type: "fileSystem"
+          operation: "create"
+          path: ".postcssrc.json"
+          content: |
+            {
+              "plugins": {
+                "@tailwindcss/postcss": {}
+              }
+            }
+      - name: "Import Tailwind CSS"
+        action:
+          type: "fileSystem"
+          operation: "create"
+          path: "src/styles.css"
+          overwrite: true
+          content: |
+            @import "tailwindcss";
+
+            /* Your custom styles go here */
+
+  - name: "Install ESLint"
+    condition: '"eslint" in additionalLibs.answers'
+    action:
+      type: "package"
+      operation: "install"
+      packages:
+        - "eslint"
+        - "@angular-eslint/builder"
+        - "@angular-eslint/eslint-plugin"
+        - "@angular-eslint/eslint-plugin-template"
+        - "@angular-eslint/schematics"
+        - "@angular-eslint/template-parser"
+        - "@typescript-eslint/eslint-plugin"
+        - "@typescript-eslint/parser"
+      dev: true
+    onSuccess:
+      - action:
+          type: "message"
+          content: "ESLint installed successfully!"
+          style: "success"
+
+      - name: "Configure ESLint"
+        action:
+          type: "fileSystem"
+          operation: "create"
+          path: ".eslintrc.json"
+          content: |
+            {
+              "root": true,
+              "ignorePatterns": [
+                "projects/**/*"
+              ],
+              "overrides": [
+                {
+                  "files": [
+                    "*.ts"
+                  ],
+                  "extends": [
+                    "eslint:recommended",
+                    "plugin:@typescript-eslint/recommended",
+                    "plugin:@angular-eslint/recommended",
+                    "plugin:@angular-eslint/template/process-inline-templates"
+                  ],
+                  "rules": {
+                    "@angular-eslint/directive-selector": [
+                      "error",
+                      {
+                        "type": "attribute",
+                        "prefix": "app",
+                        "style": "camelCase"
+                      }
+                    ],
+                    "@angular-eslint/component-selector": [
+                      "error",
+                      {
+                        "type": "element",
+                        "prefix": "app",
+                        "style": "kebab-case"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "files": [
+                    "*.html"
+                  ],
+                  "extends": [
+                    "plugin:@angular-eslint/template/recommended"
+                  ],
+                  "rules": {}
+                }
+              ]
+            }
+
+  - name: "Install Prettier"
+    condition: '"prettier" in additionalLibs.answers'
+    action:
+      type: "package"
+      operation: "install"
+      packages:
+        - "prettier"
+        - "eslint-config-prettier"
+      dev: true
+    onSuccess:
+      - action:
+          type: "message"
+          content: "Prettier installed successfully!"
+          style: "success"
+
+      - name: "Configure Prettier"
+        condition: '"prettier" in additionalLibs.answers'
+        action:
+          type: "fileSystem"
+          operation: "create"
+          path: ".prettierrc"
+          content: |
+            {
+              "arrowParens": "always",
+              "bracketSpacing": true,
+              "endOfLine": "lf",
+              "printWidth": 120,
+              "semi": true,
+              "singleQuote": true,
+              "tabWidth": 2,
+              "trailingCommas": "all",
+              "useTabs": false
+            }
+
+  - name: "Install Biome"
+    condition: '"biome" in additionalLibs.answers'
+    action:
+      type: "package"
+      operation: "install"
+      packages:
+        - "@biomejs/biome"
+      dev: true
+    onSuccess:
+      - action:
+          type: "message"
+          content: "Biome installed successfully!"
+          style: "success"
+
+      - name: "Configure Biome"
+        action:
+          type: "fileSystem"
+          operation: "create"
+          path: "biome.json"
+          content: |
+            {
+              "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+              "organizeImports": {
+                "enabled": true
+              },
+              "linter": {
+                "enabled": true,
+                "rules": {
+                  "recommended": true
+                }
+              },
+              "formatter": {
+                "enabled": true,
+                "indentStyle": "space",
+                "indentWidth": 2,
+                "lineWidth": 100
+              },
+              "javascript": {
+                "formatter": {
+                  "quoteStyle": "single",
+                  "trailingComma": "all",
+                  "semicolons": "always"
+                }
+              }
+            }
+
+  - name: "Install PrimeNG"
+    condition: '"primeng" in additionalLibs.answers'
+    action:
+      type: "package"
+      operation: "install"
+      packages:
+        - "primeng"
+        - "@primeng/themes"
+    onSuccess:
+      - action:
+          type: "message"
+          content: "PrimeNG installed successfully!"
+          style: "success"
+
+      - name: "Install PrimeNG Tailwind Theme"
+        action:
+          type: "package"
+          operation: "install"
+          packages:
+            - "primeng-tailwind"
+        onSuccess:
+          - action:
+              type: "message"
+              content: "PrimeNG Tailwind theme installed successfully!"
+              style: "success"
+          - action:
+              type: "fileSystem"
+              operation: "create"
+              path: "src/app/app.config.ts"
+              overwrite: true
+              content: |
+                import { type ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+                import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+                import { provideRouter } from '@angular/router';
+                import Aura from '@primeng/themes/aura';
+                import { providePrimeNG } from 'primeng/config';
+                
+                import { routes } from './app.routes';
+                
+                export const appConfig: ApplicationConfig = {
+                  providers: [
+                    provideZoneChangeDetection({ eventCoalescing: true }),
+                    provideRouter(routes),
+                    provideAnimationsAsync(),
+                    providePrimeNG({
+                      theme: {
+                        preset: Aura,
+                      },
+                    }),
+                  ],
+                };
+
+  - name: "Install integration between PrimeNG and Tailwind CSS"
+    condition: '"primeng" in additionalLibs.answers and "tailwindcss" in additionalLibs.answers'
+    action:
+      type: package
+      operation: install
+      packages:
+        - tailwindcss-primeui
+    onSuccess:
+      - name: "Import Tailwind CSS/PrimeUI"
+        action:
+          type: "fileSystem"
+          operation: "create"
+          path: "src/styles.css"
+          overwrite: true
+          content: |
+            @import "tailwindcss";
+            @import "tailwindcss-primeui";
+            
+            /* Your custom styles go here */
+      - name: "Configure Angular app for Tailwind CSS/PrimeUI"
+        action:
+          type: "fileSystem"
+          operation: "create"
+          path: "src/app/app.config.ts"
+          overwrite: true
+          content: |
+            import { type ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+            import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+            import { provideRouter } from '@angular/router';
+            import Aura from '@primeng/themes/aura';
+            import { providePrimeNG } from 'primeng/config';
+            
+            import { routes } from './app.routes';
+            
+            export const appConfig: ApplicationConfig = {
+              providers: [
+                provideZoneChangeDetection({ eventCoalescing: true }),
+                provideRouter(routes),
+                provideAnimationsAsync(),
+                providePrimeNG({
+                  theme: {
+                    preset: Aura,
+                    options: {
+                      cssLayer: {
+                        name: 'primeng',
+                        order: 'theme, base, primeng',
+                      },
+                    },
+                  },
+                }),
+              ],
+            };
+
+  - name: "Install Husky"
+    condition: '"husky" in additionalLibs.answers'
+    action:
+      type: "package"
+      operation: "install"
+      packages:
+        - "husky"
+        - "lint-staged"
+      dev: true
+    onSuccess:
+      - action:
+          type: "message"
+          content: "Husky installed successfully!"
+          style: "success"
+
+      - name: "Configure Husky"
+        action:
+          type: "package"
+          operation: "run"
+          package: "husky"
+          options: "init"
+        onSuccess:
+          - action:
+              type: "fileSystem"
+              operation: "create"
+              path: ".husky/pre-commit"
+              overwrite: true
+              content: |
+                #!/usr/bin/env sh
+                . "$(dirname -- "$0")/_/husky.sh"
+                
+                npx lint-staged
+          - action:
+              type: "fileSystem"
+              operation: "create"
+              path: ".lintstagedrc"
+              content: |
+                {
+                  "*.{ts,html}": [
+                    {{if "eslint" in additionalLibs.answers}}"eslint --fix",{{/if}}
+                    {{if "prettier" in additionalLibs.answers}}"prettier --write",{{/if}}
+                    {{if "biome" in additionalLibs.answers}}"biome check --apply",{{/if}}
+                    "git add"
+                  ]
+                }
+
+      - name: "Conclusion Message"
+        action:
+          type: "message"
+          content: |
+            🎉 Installation completed successfully!
+            
+            Your Angular project is configured with:
+            - Angular
+            {{if "tailwindcss" in additionalLibs.answers}}- Tailwind CSS{{/if}}
+            {{if "eslint" in additionalLibs.answers}}- ESLint{{/if}}
+            {{if "prettier" in additionalLibs.answers}}- Prettier{{/if}}
+            {{if "biome" in additionalLibs.answers}}- Biome{{/if}}
+            {{if "primeng" in additionalLibs.answers}}- PrimeNG{{/if}}
+            {{if "primeng" in additionalLibs.answers and "tailwindcss" in additionalLibs.answers}}- PrimeNG Tailwind Theme{{/if}}
+            {{if "husky" in additionalLibs.answers}}- Husky (Git hooks){{/if}}
+            
+            To start your application:
+            $ cd {$RELATIVE_PROJECT_DIRECTORY}
+            $ ng serve
+          style: "success"
